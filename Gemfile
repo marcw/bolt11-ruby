@@ -1,6 +1,10 @@
-source "https://rubygems.org"
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
 gemspec
 
-gem 'bitcoin'
 gem 'bech32'
-gem 'pry' # for REPL
+gem 'bitcoinrb', require: 'bitcoin'
+
+gem 'rubocop', require: false
+gem 'rubocop-rspec', require: false

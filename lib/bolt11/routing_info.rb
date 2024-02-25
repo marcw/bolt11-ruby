@@ -1,4 +1,7 @@
+# frozen_string_literal: true
+
 module Bolt11
+  # RoutingInfo is a class that represents the routing information of a BOLT #11 invoice.
   class RoutingInfo
     attr_accessor :pubkey, :short_channel_id, :fee_base_msat, :fee_proportional_millionths, :cltv_expiry_delta
 
