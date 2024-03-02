@@ -16,11 +16,11 @@ module Bolt11
     end
 
     def msatoshi
-      (amount * 100_000_000_000_000).to_i
+      (amount * 100_000_000 * 1_000).to_i
     end
 
     def satoshi
-      (amount * 100_000_000_000).to_i
+      (amount * 100_000_000).to_i
     end
   end
 end
