@@ -1,4 +1,5 @@
-require 'bundler/setup'
+# frozen_string_literal: true
+
 require 'bolt11'
 
 RSpec.configure do |config|

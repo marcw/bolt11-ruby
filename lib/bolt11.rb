@@ -1,18 +1,34 @@
 # frozen_string_literal: true
 
+require_relative 'bolt11/version'
+require_relative 'bolt11/bitstring'
+require_relative 'bolt11/ln_addr'
+require_relative 'bolt11/routing_info'
 require 'bigdecimal'
-require 'bolt11/version'
-require 'bolt11/binary'
-require 'bolt11/hrp'
-require 'bolt11/lnaddr'
-require 'bolt11/routing_info'
-require 'bitcoin'
 require 'bech32'
 
 # Bolt11 is a module that provides a method to decode a BOLT #11 invoice.
 module Bolt11
+  # BOLT #11:
+  # The following `multiplier` letters are defined:
+  #
+  # * `m` (milli): multiply by 0.001
+  # * `u` (micro): multiply by 0.000001
+  # * `n` (nano): multiply by 0.000000001
+  # * `p` (pico): multiply by 0.000000000001
+  UNITS = {
+    p: 10**12,
+    n: 10**9,
+    u: 10**6,
+    m: 10**3
+  }.freeze
+
   module_function
 
+  # Decode a BOLT #11 invoice
+  # @param invoice [String] the invoice to decode
+  # @param max_length [Integer] the maximum length of the invoice
+  # @return [Bolt11::LnAddr] the decoded invoice
   def decode(invoice, max_length: 1024)
     hrp, data_part = Bech32.decode(invoice, max_length)
     raise ArgumentError, 'Invalid invoice: bad bech32 checksum' if hrp.nil?
@@ -20,7 +36,7 @@ module Bolt11
     # A reader MUST fail if it does not understand the `prefix`.
     raise ArgumentError, "Invalid invoice: does not start with 'ln'" unless hrp.start_with?('ln')
 
-    data_bs = BitString.new(data_part)
+    data_bs = Bitstring.new(data_part)
     raise ArgumentError, 'Invalid invoice: too short to contain a signature' if data_bs.length < 65 * 8
 
     lnaddr = LnAddr.new
@@ -69,10 +85,11 @@ module Bolt11
       # f (9): data_length variable, depending on version.
       # Fallback on-chain address: for Bitcoin, this starts with a 5-bit version
       # and contains a witness program or P2PKH or P2SH address.
-      when 'f'
-        fallback = parse_fallback(tag_data, lnaddr.currency)
-        lnaddr.fallback_addr = fallback unless fallback.nil?
-        lnaddr.unknown_tags << [tag, tag_data] if fallback.nil?
+      # TODO
+      # when 'f'
+      #   fallback = parse_fallback(tag_data, lnaddr.currency)
+      #   lnaddr.fallback_addr = fallback unless fallback.nil?
+      #   lnaddr.unknown_tags << [tag, tag_data] if fallback.nil?
       # BOLT #11
       #
       # d (13): data_length variable.
@@ -129,21 +146,30 @@ module Bolt11
     lnaddr
   end
 
-  def checksig
-    # A reader MUST check that the signature is valid
+  # decode the human readable part of the invoice
+  def decode_hrp(hrp)
+    m = hrp[2..].match(/[^\d]+/)
+    raise ArgumentError, 'Invalid human readable part' if m.nil?
+
+    amount_str = hrp[2 + m[0].length..]
+
+    return [m[0], nil] if amount_str.empty?
+
+    [m[0], unshorten_amount(amount_str)]
   end
 
-  def parse_fallback(tag_data, currency)
-    return tag_data.to_bytes unless %w[bc tb].include?(currency)
+  # Given a shortened amount, convert it into a decimal
+  def unshorten_amount(amount)
+    raise ArgumentError, 'Amount must be a string' unless amount.is_a? String
 
-    # TODO
-    nil
+    # BOLT #11:
+    # A reader SHOULD fail if `amount` contains a non-digit, or is followed by
+    # anything except a `multiplier` in the Hash defined above.
+    raise ArgumentError, 'Invalid Amount' unless amount.match?(/^\d+[pnum]?$/)
 
-    # wver = tag_data.read(5).to_i
-    # if wver == 17
-    #
-    # elsif wver == 18
-    # elsif wver <= 16
-    # end
+    unit = (amount[-1]).to_sym
+    return BigDecimal(amount[0..-2]) / UNITS[unit] if UNITS.key? unit
+
+    BigDecimal(amount)
   end
 end
