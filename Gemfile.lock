@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bolt11 (0.2.0)
+    bolt11 (0.3.0)
       bech32 (~> 1.4)
       bigdecimal (~> 3.0)
 
@@ -66,7 +66,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bech32
   bolt11!
   bundler (~> 2.5)
   rake (~> 13.1)
