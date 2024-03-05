@@ -1,6 +1,10 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request: ~
 
 jobs:
   test:
@@ -17,5 +21,34 @@ jobs:
         ruby-version: ${{ matrix.ruby }}
         bundler-cache: true
         cache-version: 2
-    - run: bundle exec rake
+    - name: install dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get install build-essential automake pkg-config libtool libffi-dev
+    # limit step to ubuntu-latest
+    - name: install secp256k1 on ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        LIB_VERSION=0.4.1
+        wget https://github.com/bitcoin-core/secp256k1/archive/refs/tags/v${LIB_VERSION}.tar.gz -O /tmp/secp256k1-${LIB_VERSION}.tar.gz
+        pushd /tmp
+        tar -xvf secp256k1-${LIB_VERSION}.tar.gz
+        pushd secp256k1-${LIB_VERSION}
+        ./autogen.sh 
+        ./configure --disable-silent-rules --enable-module-recovery --enable-module-ecdh --enable-module-schnorrsig --enable-module-extrakeys 
+        make && sudo make install
+        ls -lah /usr/local/lib/libsecp*
+    - name: install secp256k1 on macOS
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install secp256k1
+    - name: macOS tests
+      if: matrix.os == 'macos-latest'
+      run: |
+        export SECP256K1_LIB_PATH="$(brew --prefix secp256k1)/lib/libsecp256k1.dylib"
+        bundle exec rake
+    - name: linux tests
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        export SECP256K1_LIB_PATH="/usr/local/lib/libsecp256k1.so"
+        bundle exec rake
     
