@@ -15,6 +15,33 @@ RSpec.describe Bolt11::Bitstring do
     end
   end
 
+  describe '#[]' do
+    it 'returns a Bitstring' do
+      bs = described_class.new('00001')
+      expect(bs[0]).to be_a described_class
+    end
+
+    it 'returns a Bitstring with the correct value' do
+      bs = described_class.new('00001')
+      expect(bs[0].length).to eq 1
+    end
+
+    it 'returns a Bitstring with the correct value' do
+      bs = described_class.new('00001')
+      expect(bs[0..2].binary).to eq '000'
+    end
+
+    it 'returns a Bitstring with the correct value' do
+      bs = described_class.new('00001')
+      expect(bs[0..].binary).to eq '00001'
+    end
+
+    it 'returns a Bitstring with the correct value' do
+      bs = described_class.new('0000111000')
+      expect(bs[5..].binary).to eq '11000'
+    end
+  end
+
   describe '#length' do
     params = [
       ['00001011001001011111111001100100010', 35],

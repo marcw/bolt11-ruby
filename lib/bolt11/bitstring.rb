@@ -3,7 +3,8 @@
 module Bolt11
   # Bitstring is a class that represents a binary string of 5bits integers.
   class Bitstring
-    attr_reader :pos, :binary
+    attr_reader :binary
+    attr_accessor :pos
 
     def initialize(data)
       @pos = 0
@@ -15,7 +16,7 @@ module Bolt11
     end
 
     def read(bits)
-      raise "index out of range pos=#{pos}, bits=#{bits}, length=#{length}" if pos + bits >= length
+      raise "index out of range pos=#{pos}, bits=#{bits}, length=#{length}" if pos + bits > length
 
       x = @binary[pos...pos + bits]
       @pos += bits
@@ -24,6 +25,16 @@ module Bolt11
 
     def length
       @binary.length
+    end
+
+    def [](index)
+      Bitstring.new(@binary[index])
+    end
+
+    def to_array_u5
+      @binary.chars.each_slice(5).map(&:join).map do |val|
+        val.to_i(2)
+      end
     end
 
     # Splits the binary string to an array of 5-bits binary strings
