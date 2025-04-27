@@ -4,7 +4,7 @@ require_relative 'bolt11/version'
 require_relative 'bolt11/bitstring'
 require_relative 'bolt11/ln_addr'
 require_relative 'bolt11/routing_info'
-require_relative 'bolt11/secp256k1'
+require 'secp256k1'
 require 'bigdecimal'
 require 'bitcoin'
 require 'bech32'
@@ -178,9 +178,11 @@ module Bolt11
       lnaddr.preimage = preimage
       lnaddr.signature = signature[0...64]
       lnaddr.recovery_flag = signature[64]
-      pubkey = Bolt11::Secp256k1.recover_compact(lnaddr.preimage_hash, lnaddr.signature.pack('C*'),
-                                                 lnaddr.recovery_flag, true)
-      lnaddr.pubkey = pubkey.pubkey unless pubkey.nil?
+
+      pubkey = ::Secp256k1::Recover.recover(lnaddr.preimage_hash, signature.pack('C*'), true)
+      # pubkey = Bolt11::Secp256k1.recover_compact(lnaddr.preimage_hash, lnaddr.signature.pack('C*'),
+                                                 # lnaddr.recovery_flag, true)
+      lnaddr.pubkey = Bitcoin::Key(pubkey: pubkey, compressed: true)# pubkey.pubkey unless pubkey.nil?
     end
     lnaddr
   end
