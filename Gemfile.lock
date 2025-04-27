@@ -5,6 +5,7 @@ PATH
       bech32 (~> 1.5)
       bigdecimal (~> 3.0)
       bitcoinrb (~> 1.8.1)
+      secp256k1rb (~> 0.1)
 
 GEM
   remote: https://rubygems.org/

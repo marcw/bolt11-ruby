@@ -1,10 +1,10 @@
-require 'bitcoin'
+require 'secp256k1'
 
 module Bolt11
   module Secp256k1
     module_function
 
-    extend Bitcoin::Secp256k1::Native
+    extend ::Secp256k1
 
     # Recover public key from compact signature.
     # @param [String] data message digest using signature.
